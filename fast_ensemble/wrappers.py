@@ -1,9 +1,10 @@
 from fast_ensemble.errors import NotFittedError
 
 
-class BaseWrapper:
-    def __init__(self, base_estimator):
+class BaseRegressorWrapper:
+    def __init__(self, base_estimator, use_best_model: bool = False):
         self.base_estimator = base_estimator
+        self.use_best_model = use_best_model
         self.fitted = False
 
     def fit(self, X, y, eval_set: tuple = None, early_stopping_rounds: int = None):
@@ -16,14 +17,47 @@ class BaseWrapper:
     def get_model(self):
         return self.base_estimator
 
+    def get_iterations(self):
+        return self.base_estimator.n_estimators
+
     def predict(self, X):
         if not self.fitted:
             raise NotFittedError()
 
-        return self.base_estimator.predict(X)
+        return self.base_estimator.predict(X, ntree_limit=self.get_iterations())
 
 
-class CatBoostClassifierWrapper(BaseWrapper):
+class BaseClassifierWrapper(BaseRegressorWrapper):
+    def __init__(self, base_estimator, use_best_model):
+        super().__init__(base_estimator)
+        self.base_estimator = base_estimator
+        self.use_best_model = use_best_model
+        self.fitted = False
+
+    def predict_proba(self, X):
+        if not self.fitted:
+            raise NotFittedError()
+
+        return self.base_estimator.predict_proba(X, ntree_limit=self.get_iterations())
+
+
+class CatBoostWrapper:
+    def __init__(self, base_estimator, use_best_model: bool = False):
+        self.base_estimator = base_estimator
+        self.use_best_model = use_best_model
+        self.fitted = False
+
+    def get_iterations(self):
+        if not self.fitted:
+            raise NotFittedError()
+
+        if self.use_best_model:
+            return self.base_estimator.model.get_best_iteration()
+
+        return self.base_estimator.n_estimators
+
+
+class CatBoostClassifierWrapper(BaseClassifierWrapper, CatBoostWrapper):
     def __init__(
         self,
         base_estimator,
@@ -32,7 +66,7 @@ class CatBoostClassifierWrapper(BaseWrapper):
         text_features: list = None,
         embedding_features: list = None,
     ):
-        super().__init__(base_estimator)
+        super().__init__(base_estimator, use_best_model)
         self.use_best_model = use_best_model
         self.cat_features = cat_features
         self.text_features = text_features
@@ -54,20 +88,8 @@ class CatBoostClassifierWrapper(BaseWrapper):
 
         return self.base_estimator
 
-    def predict(self, X):
-        if not self.fitted:
-            raise NotFittedError()
 
-        return self.base_estimator.predict(X)
-
-    def predict_proba(self, X):
-        if not self.fitted:
-            raise NotFittedError()
-
-        return self.base_estimator.predict_proba(X)
-
-
-class CatBoostRegressorWrapper(BaseWrapper):
+class CatBoostRegressorWrapper(BaseRegressorWrapper, CatBoostWrapper):
     def __init__(
         self, base_estimator, use_best_model: bool = False, cat_features: list = None
     ):
@@ -90,19 +112,11 @@ class CatBoostRegressorWrapper(BaseWrapper):
         return self.base_estimator
 
 
-class XGBClassifierWrapper(BaseWrapper):
+class XGBWrapper:
     def __init__(self, base_estimator, use_best_model: bool = False):
-        super().__init__(base_estimator)
+        self.base_estimator = base_estimator
         self.use_best_model = use_best_model
-
-    def fit(self, X, y, eval_set: tuple = None, early_stopping_rounds: int = None):
-        self.base_estimator.fit(
-            X, y, eval_set=[eval_set], early_stopping_rounds=early_stopping_rounds
-        )
-
-        self.fitted = True
-
-        return self.base_estimator
+        self.fitted = False
 
     def get_iterations(self):
         if not self.fitted:
@@ -113,20 +127,8 @@ class XGBClassifierWrapper(BaseWrapper):
 
         return self.base_estimator.n_estimators
 
-    def predict(self, X):
-        if not self.fitted:
-            raise NotFittedError()
 
-        return self.base_estimator.predict(X, ntree_limit=self.get_iterations())
-
-    def predict_proba(self, X):
-        if not self.fitted:
-            raise NotFittedError()
-
-        return self.base_estimator.predict_proba(X, ntree_limit=self.get_iterations())
-
-
-class XGBRegressorWrapper(BaseWrapper):
+class XGBClassifierWrapper(BaseClassifierWrapper, XGBWrapper):
     def __init__(self, base_estimator, use_best_model: bool = False):
         super().__init__(base_estimator)
         self.use_best_model = use_best_model
@@ -140,23 +142,8 @@ class XGBRegressorWrapper(BaseWrapper):
 
         return self.base_estimator
 
-    def get_iterations(self):
-        if not self.fitted:
-            raise NotFittedError()
 
-        if self.use_best_model:
-            return self.base_estimator.get_booster().best_ntree_limit
-
-        return self.base_estimator.n_estimators
-
-    def predict(self, X):
-        if not self.fitted:
-            raise NotFittedError()
-
-        return self.base_estimator.predict(X, ntree_limit=self.get_iterations())
-
-
-class LGBMClassifierWrapper(BaseWrapper):
+class XGBRegressorWrapper(BaseRegressorWrapper, XGBWrapper):
     def __init__(self, base_estimator, use_best_model: bool = False):
         super().__init__(base_estimator)
         self.use_best_model = use_best_model
@@ -169,6 +156,13 @@ class LGBMClassifierWrapper(BaseWrapper):
         self.fitted = True
 
         return self.base_estimator
+
+
+class XGBWrapper:
+    def __init__(self, base_estimator, use_best_model: bool = False):
+        self.base_estimator = base_estimator
+        self.use_best_model = use_best_model
+        self.fitted = False
 
     def get_iterations(self):
         if not self.fitted:
@@ -179,20 +173,8 @@ class LGBMClassifierWrapper(BaseWrapper):
 
         return self.base_estimator.n_estimators_
 
-    def predict(self, X):
-        if not self.fitted:
-            raise NotFittedError()
 
-        return self.base_estimator.predict(X, ntree_limit=self.get_iterations())
-
-    def predict_proba(self, X):
-        if not self.fitted:
-            raise NotFittedError()
-
-        return self.base_estimator.predict_proba(X, ntree_limit=self.get_iterations())
-
-
-class LGBMRegressorWrapper(BaseWrapper):
+class LGBMClassifierWrapper(BaseClassifierWrapper):
     def __init__(self, base_estimator, use_best_model: bool = False):
         super().__init__(base_estimator)
         self.use_best_model = use_best_model
@@ -206,17 +188,17 @@ class LGBMRegressorWrapper(BaseWrapper):
 
         return self.base_estimator
 
-    def get_iterations(self):
-        if not self.fitted:
-            raise NotFittedError()
 
-        if self.use_best_model:
-            return self.base_estimator.best_iteration
+class LGBMRegressorWrapper(BaseRegressorWrapper):
+    def __init__(self, base_estimator, use_best_model: bool = False):
+        super().__init__(base_estimator)
+        self.use_best_model = use_best_model
 
-        return self.base_estimator.n_estimators_
+    def fit(self, X, y, eval_set: tuple = None, early_stopping_rounds: int = None):
+        self.base_estimator.fit(
+            X, y, eval_set=[eval_set], early_stopping_rounds=early_stopping_rounds
+        )
 
-    def predict(self, X):
-        if not self.fitted:
-            raise NotFittedError()
+        self.fitted = True
 
-        return self.base_estimator.predict(X, ntree_limit=self.get_iterations())
+        return self.base_estimator
