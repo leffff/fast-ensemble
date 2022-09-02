@@ -6,7 +6,6 @@ from sklearn.model_selection import KFold, StratifiedKFold
 
 from fast_ensemble.errors import NotFittedError
 from fast_ensemble.utils import average_preds, to_pandas
-
 from fast_ensemble.wrappers import (
     CatBoostClassifierWrapper,
     CatBoostRegressorWrapper,
@@ -23,15 +22,15 @@ class StackingTransformer:
     """
 
     def __init__(
-            self,
-            models: list,
-            main_metric,
-            other_metrics: list = None,
-            n_folds: int = 5,
-            random_state: int = None,
-            shuffle: bool = False,
-            verbose: bool = True,
-            regression: bool = True,
+        self,
+        models: list,
+        main_metric,
+        other_metrics: list = None,
+        n_folds: int = 5,
+        random_state: int = None,
+        shuffle: bool = False,
+        verbose: bool = True,
+        regression: bool = True,
     ):
 
         self.models = [i[1] for i in models]
@@ -51,9 +50,9 @@ class StackingTransformer:
         self.fitted = False
 
     def fit(
-            self,
-            X: Union[pd.DataFrame, pd.Series, np.array, list],
-            y: Union[pd.DataFrame, pd.Series, np.array, list],
+        self,
+        X: Union[pd.DataFrame, pd.Series, np.array, list],
+        y: Union[pd.DataFrame, pd.Series, np.array, list],
     ):
 
         self.model_dict = {}
@@ -75,7 +74,9 @@ class StackingTransformer:
 
         # Form each model
         for model_i in range(self.n_models):
-            print(self.names[model_i])
+            if self.verbose:
+                print(self.names[model_i])
+
             # For each fold
             sub_models = []
             sub_scores = []
@@ -86,11 +87,18 @@ class StackingTransformer:
                 X_train, X_test = X.iloc[train_index], X.iloc[test_index]
                 y_train, y_test = y[train_index], y[test_index]
 
-                if type(sub_model) in [CatBoostRegressorWrapper, CatBoostClassifierWrapper,
-                                       XGBRegressorWrapper, XGBClassifierWrapper, LGBMClassifierWrapper,
-                                       LGBMRegressorWrapper]:
+                if type(sub_model) in [
+                    CatBoostRegressorWrapper,
+                    CatBoostClassifierWrapper,
+                    XGBRegressorWrapper,
+                    XGBClassifierWrapper,
+                    LGBMClassifierWrapper,
+                    LGBMRegressorWrapper,
+                ]:
 
-                    sub_model = sub_model.fit(X_train, y_train, eval_set=(X_test, y_test))
+                    sub_model = sub_model.fit(
+                        X_train, y_train, eval_set=(X_test, y_test)
+                    )
                 else:
                     sub_model = sub_model.fit(X_train, y_train)
 
@@ -115,7 +123,7 @@ class StackingTransformer:
         return self
 
     def transform(
-            self, X: Union[pd.DataFrame, pd.Series, np.array, list]
+        self, X: Union[pd.DataFrame, pd.Series, np.array, list]
     ) -> pd.DataFrame:
         preds = dict()
 
@@ -142,9 +150,9 @@ class StackingTransformer:
         return pd.DataFrame(preds)
 
     def fit_transform(
-            self,
-            X: Union[pd.DataFrame, pd.Series, np.array, list],
-            y: Union[pd.DataFrame, pd.Series, np.array, list],
+        self,
+        X: Union[pd.DataFrame, pd.Series, np.array, list],
+        y: Union[pd.DataFrame, pd.Series, np.array, list],
     ) -> pd.DataFrame:
 
         self.model_dict = {}
@@ -167,7 +175,9 @@ class StackingTransformer:
         all_preds = []
         # Form each model
         for model_i in range(self.n_models):
-            print(self.names[model_i])
+            if self.verbose:
+                print(self.names[model_i])
+
             # For each fold
             sub_models = []
             sub_scores = []
@@ -179,11 +189,18 @@ class StackingTransformer:
                 X_train, X_test = X.iloc[train_index], X.iloc[test_index]
                 y_train, y_test = y[train_index], y[test_index]
 
-                if type(sub_model) in [CatBoostRegressorWrapper, CatBoostClassifierWrapper,
-                                       XGBRegressorWrapper, XGBClassifierWrapper, LGBMClassifierWrapper,
-                                       LGBMRegressorWrapper]:
+                if type(sub_model) in [
+                    CatBoostRegressorWrapper,
+                    CatBoostClassifierWrapper,
+                    XGBRegressorWrapper,
+                    XGBClassifierWrapper,
+                    LGBMClassifierWrapper,
+                    LGBMRegressorWrapper,
+                ]:
 
-                    sub_model = sub_model.fit(X_train, y_train, eval_set=(X_test, y_test))
+                    sub_model = sub_model.fit(
+                        X_train, y_train, eval_set=(X_test, y_test)
+                    )
                 else:
                     sub_model = sub_model.fit(X_train, y_train)
 
