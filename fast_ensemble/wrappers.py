@@ -2,12 +2,18 @@ from fast_ensemble.errors import NotFittedError
 
 
 class BaseRegressorWrapper:
-    def __init__(self, base_estimator, use_best_model: bool = False):
+    def __init__(
+        self,
+        base_estimator,
+        use_best_model: bool = False,
+        early_stopping_rounds: int = None
+    ):
         self.base_estimator = base_estimator
         self.use_best_model = use_best_model
+        self.early_stopping_rounds = early_stopping_rounds
         self.fitted = False
 
-    def fit(self, X, y, eval_set: tuple = None, early_stopping_rounds: int = None):
+    def fit(self, X, y, eval_set: tuple = None):
         self.base_estimator.fit(X, y)
 
         self.fitted = True
@@ -28,8 +34,8 @@ class BaseRegressorWrapper:
 
 
 class BaseClassifierWrapper(BaseRegressorWrapper):
-    def __init__(self, base_estimator, use_best_model):
-        super().__init__(base_estimator)
+    def __init__(self, base_estimator, use_best_model: bool = False, early_stopping_rounds: int = None):
+        super().__init__(base_estimator, use_best_model, early_stopping_rounds)
         self.base_estimator = base_estimator
         self.use_best_model = use_best_model
         self.fitted = False
@@ -42,9 +48,15 @@ class BaseClassifierWrapper(BaseRegressorWrapper):
 
 
 class CatBoostWrapper:
-    def __init__(self, base_estimator, use_best_model: bool = False):
+    def __init__(
+        self,
+        base_estimator,
+        use_best_model: bool = False,
+        early_stopping_rounds: int = None
+    ):
         self.base_estimator = base_estimator
         self.use_best_model = use_best_model
+        self.early_stopping_rounds = early_stopping_rounds
         self.fitted = False
 
     def get_iterations(self):
@@ -62,17 +74,17 @@ class CatBoostClassifierWrapper(BaseClassifierWrapper, CatBoostWrapper):
         self,
         base_estimator,
         use_best_model: bool = False,
+        early_stopping_rounds: int = None,
         cat_features: list = None,
         text_features: list = None,
-        embedding_features: list = None,
+        embedding_features: list = None
     ):
-        super().__init__(base_estimator, use_best_model)
-        self.use_best_model = use_best_model
+        super().__init__(base_estimator, use_best_model, early_stopping_rounds)
         self.cat_features = cat_features
         self.text_features = text_features
         self.embedding_features = embedding_features
 
-    def fit(self, X, y, eval_set: tuple = None, early_stopping_rounds: int = None):
+    def fit(self, X, y, eval_set: tuple = None):
         self.base_estimator.fit(
             X,
             y,
@@ -81,7 +93,7 @@ class CatBoostClassifierWrapper(BaseClassifierWrapper, CatBoostWrapper):
             cat_features=self.cat_features,
             text_features=self.text_features,
             embedding_features=self.embedding_features,
-            early_stopping_rounds=early_stopping_rounds,
+            early_stopping_rounds=self.early_stopping_rounds,
         )
 
         self.fitted = True
@@ -91,20 +103,23 @@ class CatBoostClassifierWrapper(BaseClassifierWrapper, CatBoostWrapper):
 
 class CatBoostRegressorWrapper(BaseRegressorWrapper, CatBoostWrapper):
     def __init__(
-        self, base_estimator, use_best_model: bool = False, cat_features: list = None
+        self,
+        base_estimator,
+        use_best_model: bool = False,
+        early_stopping_rounds: int = None,
+        cat_features: list = None
     ):
-        super().__init__(base_estimator)
-        self.use_best_model = use_best_model
+        super().__init__(base_estimator, use_best_model, early_stopping_rounds)
         self.cat_features = cat_features
 
-    def fit(self, X, y, eval_set: tuple = None, early_stopping_rounds: int = None):
+    def fit(self, X, y, eval_set: tuple = None):
         self.base_estimator.fit(
             X,
             y,
             eval_set=eval_set,
             use_best_model=self.use_best_model,
             cat_features=self.cat_features,
-            early_stopping_rounds=early_stopping_rounds,
+            early_stopping_rounds=self.early_stopping_rounds,
         )
 
         self.fitted = True
@@ -113,9 +128,15 @@ class CatBoostRegressorWrapper(BaseRegressorWrapper, CatBoostWrapper):
 
 
 class XGBWrapper:
-    def __init__(self, base_estimator, use_best_model: bool = False):
+    def __init__(
+        self,
+        base_estimator,
+        use_best_model: bool = False,
+        early_stopping_rounds: int = None
+    ):
         self.base_estimator = base_estimator
         self.use_best_model = use_best_model
+        self.early_stopping_rounds = early_stopping_rounds
         self.fitted = False
 
     def get_iterations(self):
@@ -127,41 +148,46 @@ class XGBWrapper:
 
         return self.base_estimator.n_estimators
 
-
-class XGBClassifierWrapper(BaseClassifierWrapper, XGBWrapper):
-    def __init__(self, base_estimator, use_best_model: bool = False):
-        super().__init__(base_estimator)
-        self.use_best_model = use_best_model
-
-    def fit(self, X, y, eval_set: tuple = None, early_stopping_rounds: int = None):
+    def fit(self, X, y, eval_set: tuple = None):
         self.base_estimator.fit(
-            X, y, eval_set=[eval_set], early_stopping_rounds=early_stopping_rounds
+            X, y, eval_set=[eval_set], early_stopping_rounds=self.early_stopping_rounds
         )
 
         self.fitted = True
 
         return self.base_estimator
+
+
+class XGBClassifierWrapper(BaseClassifierWrapper, XGBWrapper):
+    def __init__(
+        self,
+        base_estimator,
+        use_best_model: bool = False,
+        early_stopping_rounds: int = None
+    ):
+        super().__init__(base_estimator, use_best_model, early_stopping_rounds)
 
 
 class XGBRegressorWrapper(BaseRegressorWrapper, XGBWrapper):
-    def __init__(self, base_estimator, use_best_model: bool = False):
-        super().__init__(base_estimator)
-        self.use_best_model = use_best_model
-
-    def fit(self, X, y, eval_set: tuple = None, early_stopping_rounds: int = None):
-        self.base_estimator.fit(
-            X, y, eval_set=[eval_set], early_stopping_rounds=early_stopping_rounds
-        )
-
-        self.fitted = True
-
-        return self.base_estimator
+    def __init__(
+        self,
+        base_estimator,
+        use_best_model: bool = False,
+        early_stopping_rounds: int = None
+    ):
+        super().__init__(base_estimator, use_best_model, early_stopping_rounds)
 
 
-class XGBWrapper:
-    def __init__(self, base_estimator, use_best_model: bool = False):
+class LGBMWrapper:
+    def __init__(
+        self,
+        base_estimator,
+        use_best_model: bool = False,
+        early_stopping_rounds: int = None
+    ):
         self.base_estimator = base_estimator
         self.use_best_model = use_best_model
+        self.early_stopping_rounds = early_stopping_rounds
         self.fitted = False
 
     def get_iterations(self):
@@ -173,15 +199,9 @@ class XGBWrapper:
 
         return self.base_estimator.n_estimators_
 
-
-class LGBMClassifierWrapper(BaseClassifierWrapper):
-    def __init__(self, base_estimator, use_best_model: bool = False):
-        super().__init__(base_estimator)
-        self.use_best_model = use_best_model
-
-    def fit(self, X, y, eval_set: tuple = None, early_stopping_rounds: int = None):
+    def fit(self, X, y, eval_set: tuple = None):
         self.base_estimator.fit(
-            X, y, eval_set=[eval_set], early_stopping_rounds=early_stopping_rounds
+            X, y, eval_set=[eval_set], early_stopping_rounds=self.early_stopping_rounds
         )
 
         self.fitted = True
@@ -189,16 +209,21 @@ class LGBMClassifierWrapper(BaseClassifierWrapper):
         return self.base_estimator
 
 
-class LGBMRegressorWrapper(BaseRegressorWrapper):
-    def __init__(self, base_estimator, use_best_model: bool = False):
-        super().__init__(base_estimator)
-        self.use_best_model = use_best_model
+class LGBMClassifierWrapper(BaseClassifierWrapper, LGBMWrapper):
+    def __init__(
+        self,
+        base_estimator,
+        use_best_model: bool = False,
+        early_stopping_rounds: int = None
+    ):
+        super().__init__(base_estimator, use_best_model, early_stopping_rounds)
 
-    def fit(self, X, y, eval_set: tuple = None, early_stopping_rounds: int = None):
-        self.base_estimator.fit(
-            X, y, eval_set=[eval_set], early_stopping_rounds=early_stopping_rounds
-        )
 
-        self.fitted = True
-
-        return self.base_estimator
+class LGBMRegressorWrapper(BaseRegressorWrapper, LGBMWrapper):
+    def __init__(
+        self,
+        base_estimator,
+        use_best_model: bool = False,
+        early_stopping_rounds: int = None
+    ):
+        super().__init__(base_estimator, use_best_model, early_stopping_rounds)
