@@ -12,12 +12,19 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/leffff/fast-ensemble",
-    license='MIT',
+    license="MIT",
     packages=setuptools.find_packages(),
-    install_requires=["numpy", "pandas", "scikit-learn", "catboost", "xgboost", "lightgbm"],
+    install_requires=[
+        "numpy",
+        "pandas",
+        "scikit-learn",
+        "catboost",
+        "xgboost",
+        "lightgbm",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.8',
+    python_requires=">=3.8",
 )

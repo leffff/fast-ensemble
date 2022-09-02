@@ -27,11 +27,23 @@ stack = StackingTransformer(
         (
             "catboost",
             CatBoostClassifierWrapper(
-                CatBoostClassifier(verbose=0), use_best_model=True, early_stopping_rounds=100
+                CatBoostClassifier(verbose=0),
+                use_best_model=True,
+                early_stopping_rounds=100,
             ),
         ),
-        ("xgboost", XGBClassifierWrapper(XGBClassifier(), use_best_model=True, early_stopping_rounds=100)),
-        ("lgmb", LGBMClassifierWrapper(LGBMClassifier(), use_best_model=True, early_stopping_rounds=100)),
+        (
+            "xgboost",
+            XGBClassifierWrapper(
+                XGBClassifier(), use_best_model=True, early_stopping_rounds=100
+            ),
+        ),
+        (
+            "lgmb",
+            LGBMClassifierWrapper(
+                LGBMClassifier(), use_best_model=True, early_stopping_rounds=100
+            ),
+        ),
         ("boosting", GradientBoostingClassifier()),
     ],
     main_metric=metric,
