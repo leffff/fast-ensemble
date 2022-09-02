@@ -207,6 +207,9 @@ class LGBMRegressorWrapper(BaseWrapper):
         return self.base_estimator
 
     def get_iterations(self):
+        if not self.fitted:
+            raise NotFittedError()
+
         if self.use_best_model:
             return self.base_estimator.best_iteration
 
