@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -51,7 +51,7 @@ class StackingTransformer:
         self,
         X: Union[pd.DataFrame, pd.Series, np.array, list],
         y: Union[pd.DataFrame, pd.Series, np.array, list],
-    ):
+    ) -> Any:
 
         self.model_dict = {}
         self.model_scores_dict = {}
@@ -239,7 +239,7 @@ class StackingTransformer:
 
         return transformations
 
-    def __get_n_labels(self, y):
+    def __get_n_labels(self, y) -> None:
         if len(y.shape) == 1:
             if not self.regression:
                 self.n_labels = len(np.unique(y))
