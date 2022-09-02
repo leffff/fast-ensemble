@@ -1,10 +1,12 @@
 from fast_ensemble.errors import NotFittedError
-
+from typing import Any
+import numpy as np
+import pandas as pd
 
 class BaseRegressorWrapper:
     def __init__(
         self,
-        base_estimator,
+        base_estimator: Any,
         use_best_model: bool = False,
         early_stopping_rounds: int = None
     ):
@@ -12,21 +14,20 @@ class BaseRegressorWrapper:
         self.use_best_model = use_best_model
         self.early_stopping_rounds = early_stopping_rounds
         self.fitted = False
-
-    def fit(self, X, y, eval_set: tuple = None):
+    def fit(self, X: Union[pd.DataFrame, pd.Series, np.array, list], y: Union[pd.DataFrame, pd.Series, np.array, list], eval_set: tuple = None) -> Any:
         self.base_estimator.fit(X, y)
 
         self.fitted = True
 
         return self.base_estimator
 
-    def get_model(self):
+    def get_model(self) -> Any:
         return self.base_estimator
 
-    def get_iterations(self):
+    def get_iterations(self) -> Any:
         return self.base_estimator.n_estimators
 
-    def predict(self, X):
+    def predict(self, X: Union[pd.DataFrame, pd.Series, np.array, list]) -> np.array:
         if not self.fitted:
             raise NotFittedError()
 
@@ -34,13 +35,13 @@ class BaseRegressorWrapper:
 
 
 class BaseClassifierWrapper(BaseRegressorWrapper):
-    def __init__(self, base_estimator, use_best_model: bool = False, early_stopping_rounds: int = None):
+    def __init__(self, base_estimator: Any, use_best_model: bool = False, early_stopping_rounds: int = None):
         super().__init__(base_estimator, use_best_model, early_stopping_rounds)
         self.base_estimator = base_estimator
         self.use_best_model = use_best_model
         self.fitted = False
 
-    def predict_proba(self, X):
+    def predict_proba(self, X: pd.DataFrame) -> np.array:
         if not self.fitted:
             raise NotFittedError()
 
@@ -50,7 +51,7 @@ class BaseClassifierWrapper(BaseRegressorWrapper):
 class CatBoostWrapper:
     def __init__(
         self,
-        base_estimator,
+        base_estimator: Any,
         use_best_model: bool = False,
         early_stopping_rounds: int = None
     ):
@@ -59,7 +60,7 @@ class CatBoostWrapper:
         self.early_stopping_rounds = early_stopping_rounds
         self.fitted = False
 
-    def get_iterations(self):
+    def get_iterations(self) -> int:
         if not self.fitted:
             raise NotFittedError()
 
@@ -72,7 +73,7 @@ class CatBoostWrapper:
 class CatBoostClassifierWrapper(BaseClassifierWrapper, CatBoostWrapper):
     def __init__(
         self,
-        base_estimator,
+        base_estimator: Any,
         use_best_model: bool = False,
         early_stopping_rounds: int = None,
         cat_features: list = None,
@@ -84,7 +85,7 @@ class CatBoostClassifierWrapper(BaseClassifierWrapper, CatBoostWrapper):
         self.text_features = text_features
         self.embedding_features = embedding_features
 
-    def fit(self, X, y, eval_set: tuple = None):
+    def fit(self, X: Union[pd.DataFrame, pd.Series, np.array, list], y: Union[pd.DataFrame, pd.Series, np.array, list], eval_set: tuple = None) -> Any:
         self.base_estimator.fit(
             X,
             y,
@@ -104,7 +105,7 @@ class CatBoostClassifierWrapper(BaseClassifierWrapper, CatBoostWrapper):
 class CatBoostRegressorWrapper(BaseRegressorWrapper, CatBoostWrapper):
     def __init__(
         self,
-        base_estimator,
+        base_estimator: Any,
         use_best_model: bool = False,
         early_stopping_rounds: int = None,
         cat_features: list = None
@@ -112,7 +113,7 @@ class CatBoostRegressorWrapper(BaseRegressorWrapper, CatBoostWrapper):
         super().__init__(base_estimator, use_best_model, early_stopping_rounds)
         self.cat_features = cat_features
 
-    def fit(self, X, y, eval_set: tuple = None):
+    def fit(self, X: Union[pd.DataFrame, pd.Series, np.array, list], y: Union[pd.DataFrame, pd.Series, np.array, list], eval_set: tuple = None) -> Any:
         self.base_estimator.fit(
             X,
             y,
@@ -130,7 +131,7 @@ class CatBoostRegressorWrapper(BaseRegressorWrapper, CatBoostWrapper):
 class XGBWrapper:
     def __init__(
         self,
-        base_estimator,
+        base_estimator: Any,
         use_best_model: bool = False,
         early_stopping_rounds: int = None
     ):
@@ -139,7 +140,7 @@ class XGBWrapper:
         self.early_stopping_rounds = early_stopping_rounds
         self.fitted = False
 
-    def get_iterations(self):
+    def get_iterations(self) -> int:
         if not self.fitted:
             raise NotFittedError()
 
@@ -148,7 +149,7 @@ class XGBWrapper:
 
         return self.base_estimator.n_estimators
 
-    def fit(self, X, y, eval_set: tuple = None):
+    def fit(self, X: Union[pd.DataFrame, pd.Series, np.array, list], y: Union[pd.DataFrame, pd.Series, np.array, list], eval_set: tuple = None) -> Any:
         self.base_estimator.fit(
             X, y, eval_set=[eval_set], early_stopping_rounds=self.early_stopping_rounds
         )
@@ -161,7 +162,7 @@ class XGBWrapper:
 class XGBClassifierWrapper(BaseClassifierWrapper, XGBWrapper):
     def __init__(
         self,
-        base_estimator,
+        base_estimator: Any,
         use_best_model: bool = False,
         early_stopping_rounds: int = None
     ):
@@ -171,7 +172,7 @@ class XGBClassifierWrapper(BaseClassifierWrapper, XGBWrapper):
 class XGBRegressorWrapper(BaseRegressorWrapper, XGBWrapper):
     def __init__(
         self,
-        base_estimator,
+        base_estimator: Any,
         use_best_model: bool = False,
         early_stopping_rounds: int = None
     ):
@@ -181,7 +182,7 @@ class XGBRegressorWrapper(BaseRegressorWrapper, XGBWrapper):
 class LGBMWrapper:
     def __init__(
         self,
-        base_estimator,
+        base_estimator: Any,
         use_best_model: bool = False,
         early_stopping_rounds: int = None
     ):
@@ -190,7 +191,7 @@ class LGBMWrapper:
         self.early_stopping_rounds = early_stopping_rounds
         self.fitted = False
 
-    def get_iterations(self):
+    def get_iterations(self) -> int:
         if not self.fitted:
             raise NotFittedError()
 
@@ -199,7 +200,7 @@ class LGBMWrapper:
 
         return self.base_estimator.n_estimators_
 
-    def fit(self, X, y, eval_set: tuple = None):
+    def fit(self, X: Union[pd.DataFrame, pd.Series, np.array, list], y: Union[pd.DataFrame, pd.Series, np.array, list], eval_set: tuple = None) -> Any:
         self.base_estimator.fit(
             X, y, eval_set=[eval_set], early_stopping_rounds=self.early_stopping_rounds
         )
@@ -212,7 +213,7 @@ class LGBMWrapper:
 class LGBMClassifierWrapper(BaseClassifierWrapper, LGBMWrapper):
     def __init__(
         self,
-        base_estimator,
+        base_estimator: Any,
         use_best_model: bool = False,
         early_stopping_rounds: int = None
     ):
@@ -222,7 +223,7 @@ class LGBMClassifierWrapper(BaseClassifierWrapper, LGBMWrapper):
 class LGBMRegressorWrapper(BaseRegressorWrapper, LGBMWrapper):
     def __init__(
         self,
-        base_estimator,
+        base_estimator: Any,
         use_best_model: bool = False,
         early_stopping_rounds: int = None
     ):
