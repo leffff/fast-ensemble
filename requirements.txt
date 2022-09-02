@@ -4,6 +4,3 @@ lightgbm
 scikit-learn
 pandas
 numpy
-tqdm
-isort
-black
