@@ -22,14 +22,14 @@ class StackingTransformer:
     """
 
     def __init__(
-            self,
-            models: list,
-            main_metric,
-            n_folds: int = 5,
-            random_state: int = None,
-            shuffle: bool = False,
-            verbose: bool = True,
-            regression: bool = True,
+        self,
+        models: list,
+        main_metric,
+        n_folds: int = 5,
+        random_state: int = None,
+        shuffle: bool = False,
+        verbose: bool = True,
+        regression: bool = True,
     ):
 
         self.models = [i[1] for i in models]
@@ -48,9 +48,9 @@ class StackingTransformer:
         self.fitted = False
 
     def fit(
-            self,
-            X: Union[pd.DataFrame, pd.Series, np.array, list],
-            y: Union[pd.DataFrame, pd.Series, np.array, list],
+        self,
+        X: Union[pd.DataFrame, pd.Series, np.array, list],
+        y: Union[pd.DataFrame, pd.Series, np.array, list],
     ):
 
         self.model_dict = {}
@@ -115,7 +115,7 @@ class StackingTransformer:
         return self
 
     def transform(
-            self, X: Union[pd.DataFrame, pd.Series, np.array, list]
+        self, X: Union[pd.DataFrame, pd.Series, np.array, list]
     ) -> pd.DataFrame:
         all_preds = []
 
@@ -140,9 +140,9 @@ class StackingTransformer:
         return self.__prettify_preds(all_preds)
 
     def fit_transform(
-            self,
-            X: Union[pd.DataFrame, pd.Series, np.array, list],
-            y: Union[pd.DataFrame, pd.Series, np.array, list],
+        self,
+        X: Union[pd.DataFrame, pd.Series, np.array, list],
+        y: Union[pd.DataFrame, pd.Series, np.array, list],
     ) -> pd.DataFrame:
 
         self.model_dict = {}
