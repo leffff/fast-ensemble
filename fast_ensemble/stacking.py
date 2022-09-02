@@ -22,15 +22,14 @@ class StackingTransformer:
     """
 
     def __init__(
-        self,
-        models: list,
-        main_metric,
-        other_metrics: list = None,
-        n_folds: int = 5,
-        random_state: int = None,
-        shuffle: bool = False,
-        verbose: bool = True,
-        regression: bool = True,
+            self,
+            models: list,
+            main_metric,
+            n_folds: int = 5,
+            random_state: int = None,
+            shuffle: bool = False,
+            verbose: bool = True,
+            regression: bool = True,
     ):
 
         self.models = [i[1] for i in models]
@@ -41,7 +40,6 @@ class StackingTransformer:
 
         self.n_folds = n_folds
         self.main_metric = main_metric
-        self.other_metrics = other_metrics
         self.random_state = random_state
         self.shuffle = shuffle
         self.verbose = verbose
@@ -50,9 +48,9 @@ class StackingTransformer:
         self.fitted = False
 
     def fit(
-        self,
-        X: Union[pd.DataFrame, pd.Series, np.array, list],
-        y: Union[pd.DataFrame, pd.Series, np.array, list],
+            self,
+            X: Union[pd.DataFrame, pd.Series, np.array, list],
+            y: Union[pd.DataFrame, pd.Series, np.array, list],
     ):
 
         self.model_dict = {}
@@ -60,13 +58,7 @@ class StackingTransformer:
 
         X = to_pandas(X)
 
-        if len(y.shape) == 1:
-            if not self.regression:
-                self.n_labels = len(np.unique(y))
-            else:
-                self.n_labels = 1
-        else:
-            self.n_labels = y.shape[1]
+        self.__get_n_labels(y)
 
         kf = KFold(
             n_splits=self.n_folds, random_state=self.random_state, shuffle=self.shuffle
@@ -123,9 +115,9 @@ class StackingTransformer:
         return self
 
     def transform(
-        self, X: Union[pd.DataFrame, pd.Series, np.array, list]
+            self, X: Union[pd.DataFrame, pd.Series, np.array, list]
     ) -> pd.DataFrame:
-        preds = dict()
+        all_preds = []
 
         for model_name in self.model_dict:
             models = self.model_dict[model_name]
@@ -143,16 +135,14 @@ class StackingTransformer:
                     model_preds.append(fold_pred)
 
             mean_preds = average_preds(model_preds)
+            all_preds.append(mean_preds)
 
-            for i in range(self.n_labels):
-                preds[f"{model_name}_{i}"] = mean_preds[:, i]
-
-        return pd.DataFrame(preds)
+        return self.__prettify_preds(all_preds)
 
     def fit_transform(
-        self,
-        X: Union[pd.DataFrame, pd.Series, np.array, list],
-        y: Union[pd.DataFrame, pd.Series, np.array, list],
+            self,
+            X: Union[pd.DataFrame, pd.Series, np.array, list],
+            y: Union[pd.DataFrame, pd.Series, np.array, list],
     ) -> pd.DataFrame:
 
         self.model_dict = {}
@@ -160,13 +150,7 @@ class StackingTransformer:
 
         X = to_pandas(X)
 
-        if len(y.shape) == 1:
-            if not self.regression:
-                self.n_labels = len(np.unique(y))
-            else:
-                self.n_labels = 1
-        else:
-            self.n_labels = y.shape[1]
+        self.__get_n_labels(y)
 
         kf = KFold(
             n_splits=self.n_folds, random_state=self.random_state, shuffle=self.shuffle
@@ -224,18 +208,9 @@ class StackingTransformer:
             self.model_scores_dict[self.names[model_i]] = sub_scores
             all_preds.append(sub_preds)
 
-        transformations = pd.DataFrame(
-            np.hstack(all_preds),
-            columns=[
-                f"{model_name}_{i}"
-                for i in range(self.n_labels)
-                for model_name in self.names
-            ],
-        )
-
         self.fitted = True
 
-        return transformations
+        return self.__prettify_preds(all_preds)
 
     def get_scores(self, prettified: bool = False) -> [np.ndarray, pd.DataFrame]:
         if not self.fitted:
@@ -251,3 +226,24 @@ class StackingTransformer:
             raise NotFittedError()
 
         return self.model_dict.values()
+
+    def __prettify_preds(self, preds: list) -> pd.DataFrame:
+        transformations = pd.DataFrame(
+            np.hstack(preds),
+            columns=[
+                f"{model_name}_{i}"
+                for i in range(self.n_labels)
+                for model_name in self.names
+            ],
+        )
+
+        return transformations
+
+    def __get_n_labels(self, y):
+        if len(y.shape) == 1:
+            if not self.regression:
+                self.n_labels = len(np.unique(y))
+            else:
+                self.n_labels = 1
+        else:
+            self.n_labels = y.shape[1]
