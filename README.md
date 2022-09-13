@@ -1,5 +1,5 @@
 # fast-ensemble
-Library for effecient and convenient high level table model ensembling
+SKleanr-style library for effecient and convenient high level table model ensembling
 
 ---
 Usage Example:
