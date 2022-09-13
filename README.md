@@ -1,5 +1,5 @@
 # fast-ensemble
-SKleanr-style library for effecient and convenient high level table model ensembling
+Scikit-learn-style library for effecient and convenient high level table model ensembling
 
 ---
 Usage Example:
