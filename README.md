@@ -1,5 +1,5 @@
 # fast-ensemble
-Library for effecient and convenient high level table model ensembling
+Scikit-learn-style library for effecient and convenient high level table model ensembling
 
 ---
 ## Usage Example:
@@ -13,8 +13,8 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from xgboost import XGBRegressor
 
-from fast_ensemble.stacking import StackingTransformer
-from fast_ensemble.wrappers import (
+from fast_ensemble import StackingTransformer
+from fast_ensemble import (
     CatBoostRegressorWrapper,
     LGBMRegressorWrapper,
     XGBRegressorWrapper,
