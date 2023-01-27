@@ -10,4 +10,4 @@ from fast_ensemble.wrappers import (
 
 __author__ = "Lev Novitskiy > levnovitskiy@gmail.com > https://github.com/leffff/ > https://www.kaggle.com/levnovitskiy"
 __license__ = "MIT"
-__version__ = "0.0.4"
+__version__ = "0.0.5"
