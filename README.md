@@ -1,3 +1,7 @@
+[![PyPI version](https://img.shields.io/pypi/v/fast-ensemble.svg?colorB=4cc61e)](https://pypi.org/project/fast-ensemble/) 
+[![PyPI license](https://img.shields.io/pypi/l/fast-ensemble.svg)](https://github.com/leffff/fast-ensemble/blob/main/LICENSE)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/fast-ensemble.svg)](https://pypi.python.org/pypi/fast-ensemble/)
+
 # fast-ensemble
 Scikit-learn-style library for effecient and convenient high level table model ensembling
 
