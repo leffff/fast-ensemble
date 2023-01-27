@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold, StratifiedKFold
 
-from fast_ensemble.errors import NotFittedError, NameIntersectionError
+from fast_ensemble.errors import NotFittedError, NameIntersectionError, FoldMismatchError
 from fast_ensemble.utils import average_preds, to_pandas
 from fast_ensemble.wrappers import (
     CatBoostClassifierWrapper,
@@ -272,6 +272,9 @@ class StackingTransformer:
 
         if len(intersecting_names) > 0:
             raise NameIntersectionError(intersecting_names)
+
+        if self.n_folds != other_stack.n_folds:
+            raise FoldMismatchError(expected_n_folds=self.n_folds, received_n_folds=other_stack.n_folds)
 
         self.names.extend(other_names)
 
