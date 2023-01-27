@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold, StratifiedKFold
 
-from fast_ensemble.errors import NotFittedError
+from fast_ensemble.errors import NotFittedError, NameIntersectionError
 from fast_ensemble.utils import average_preds, to_pandas
 from fast_ensemble.wrappers import (
     CatBoostClassifierWrapper,
@@ -18,7 +18,7 @@ from fast_ensemble.wrappers import (
 
 class StackingTransformer:
     """
-    Stacking ensembling model
+    Stacking ensemble model
     """
 
     def __init__(
@@ -28,8 +28,11 @@ class StackingTransformer:
         n_folds: int = 5,
         random_state: int = None,
         shuffle: bool = False,
+        stratified: bool = True,
         verbose: bool = True,
         regression: bool = True,
+        stratification_bins: int = 10,
+        custom_bins: np.ndarray = None
     ):
 
         self.models = [i[1] for i in models]
@@ -42,8 +45,11 @@ class StackingTransformer:
         self.main_metric = main_metric
         self.random_state = random_state
         self.shuffle = shuffle
+        self.stratified = stratified
         self.verbose = verbose
         self.regression = regression
+        self.stratification_bins = stratification_bins
+        self.custom_bins = custom_bins
 
         self.fitted = False
 
@@ -60,9 +66,14 @@ class StackingTransformer:
 
         self.__get_n_labels(y)
 
-        kf = KFold(
-            n_splits=self.n_folds, random_state=self.random_state, shuffle=self.shuffle
-        )
+        if self.stratified:
+            kf = StratifiedKFold(
+                n_splits=self.n_folds, random_state=self.random_state, shuffle=self.shuffle
+            )
+        else:
+            kf = KFold(
+                n_splits=self.n_folds, random_state=self.random_state, shuffle=self.shuffle
+            )
 
         # Form each model
         for model_i in range(self.n_models):
@@ -73,7 +84,18 @@ class StackingTransformer:
             sub_models = []
             sub_scores = []
 
-            for fold, (train_index, test_index) in enumerate(kf.split(X)):
+            if self.regression:
+                if isinstance(self.custom_bins, np.ndarray):
+                    digitized = np.digitize(y, self.custom_bins)
+                else:
+                    bins = np.linspace(y.min(), y.max(), self.stratification_bins)
+                    digitized = np.digitize(y, bins)
+
+                split = kf.split(X, digitized)
+            else:
+                split = kf.split(X, y)
+
+            for fold, (train_index, test_index) in enumerate(split):
                 sub_model = self.models[model_i]
 
                 X_train, X_test = X.iloc[train_index], X.iloc[test_index]
@@ -152,9 +174,14 @@ class StackingTransformer:
 
         self.__get_n_labels(y)
 
-        kf = KFold(
-            n_splits=self.n_folds, random_state=self.random_state, shuffle=self.shuffle
-        )
+        if self.stratified:
+            kf = StratifiedKFold(
+                n_splits=self.n_folds, random_state=self.random_state, shuffle=self.shuffle
+            )
+        else:
+            kf = KFold(
+                n_splits=self.n_folds, random_state=self.random_state, shuffle=self.shuffle
+            )
 
         all_preds = []
         # Form each model
@@ -167,7 +194,18 @@ class StackingTransformer:
             sub_scores = []
             sub_preds = np.zeros((X.shape[0], self.n_labels))
 
-            for fold, (train_index, test_index) in enumerate(kf.split(X)):
+            if self.regression:
+                if isinstance(self.custom_bins, np.ndarray):
+                    digitized = np.digitize(y, self.custom_bins)
+                else:
+                    bins = np.linspace(y.min(), y.max(), self.stratification_bins)
+                    digitized = np.digitize(y, bins)
+
+                split = kf.split(X, digitized)
+            else:
+                split = kf.split(X, y)
+
+            for fold, (train_index, test_index) in enumerate(split):
                 sub_model = self.models[model_i]
 
                 X_train, X_test = X.iloc[train_index], X.iloc[test_index]
@@ -212,7 +250,7 @@ class StackingTransformer:
 
         return self.__prettify_preds(all_preds)
 
-    def get_scores(self, prettified: bool = False) -> [np.ndarray, pd.DataFrame]:
+    def get_scores(self, prettified: bool = True) -> [np.ndarray, pd.DataFrame]:
         if not self.fitted:
             raise NotFittedError()
 
@@ -221,11 +259,34 @@ class StackingTransformer:
 
         return np.array(list(self.model_scores_dict.values()))
 
-    def get_models(self) -> [np.ndarray, pd.DataFrame]:
+    def get_models(self) -> dict:
         if not self.fitted:
             raise NotFittedError()
 
-        return self.model_dict.values()
+        return self.model_dict
+
+    def merge(self, other_stack: "StackingTransformer") -> None:
+        other_names = other_stack.names
+
+        intersecting_names = set(self.names).intersection(set(other_names))
+
+        if len(intersecting_names) > 0:
+            raise NameIntersectionError(intersecting_names)
+
+        self.names.extend(other_names)
+
+        other_model_dict = other_stack.model_dict
+        for key in other_model_dict:
+            self.model_dict[key] = other_model_dict[key]
+
+        self.models.extend(other_stack.models)
+
+        self.n_models += other_stack.n_models
+
+        other_model_scores_dict = other_stack.model_scores_dict
+        for key in other_model_scores_dict:
+            self.model_scores_dict[key] = other_model_scores_dict[key]
+
 
     def __prettify_preds(self, preds: list) -> pd.DataFrame:
         transformations = pd.DataFrame(

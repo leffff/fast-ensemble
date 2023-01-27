@@ -22,3 +22,4 @@ X, y = make_regression(n_targets=1)
 print(y)
 
 print(stack.fit_transform(X, y))
+

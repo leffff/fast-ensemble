@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="fast-ensemble",
-    version="0.0.1",
+    version="0.0.3",
     author="leffff",
     author_email="levnovitskiy@gmail.com",
     description="Library for high level model ensembling",
@@ -26,5 +26,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.7",
 )
